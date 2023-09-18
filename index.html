@@ -1,8 +1,11 @@
+<!-- By Roldugin Vladimir -->
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="UTF-8">
-    <title>Выбор фигуры</title>
+    <meta charset="UTF=8">
+    <title>Тестовое задание Ридан</title>
+
     <style>
         body {
             display: flex;
@@ -12,37 +15,75 @@
             margin: 0;
         }
 
+        .container {
+            display: flex;
+            flex-direction: row;
+            /* Располагаем элементы в ряд */
+            align-items: flex-start;
+            /* Выравниваем элементы по верхнему краю */
+        }
+
+
         canvas {
             border: 1px solid black;
         }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            /* Располагаем кнопки сверху вниз */
+            margin-left: 20px;
+            /* Добавим отступ слева для разделения с областью для фигур */
+        }
+
+        button {
+            margin-bottom: 5px;
+            /* Добавим отступ между кнопками */
+        }
     </style>
 </head>
+
 <body>
-<div>
-    <canvas id="myCanvas" width="500" height="500"></canvas><br>
-    <button onclick="selectShape('triangle')">Треугольник</button>
-    <button onclick="selectShape('rectangle')">Прямоугольник</button>
-    <button onclick="selectShape('text')">Текст</button>
-    <button onclick="deleteSelected()">Удалить все</button>
-    <button onclick="deleteNextSelected()">Удалить следующий выбранный</button>
-    <button onclick="setMoveMode(true)">Переместить</button>
+    <div class="container">
+        <div class="shapes"> <!-- Область для фигур -->
+            <canvas id="myCanvas" width="800" height="500"></canvas>
+        </div>
+        <div class="buttons"> <!-- Кнопки -->
+            <button onclick="selectShape('triangle')">Треугольник</button>
+            <button onclick="selectShape('rectangle')">Прямоугольник</button>
+            <button onclick="selectShape('text')">Текст</button>
+            <button onclick="deleteSelected()">Удалить все</button>
+            <button onclick="deleteNextSelected()">Удалить следующий выбранный</button>
+            <button onclick="setMoveMode(true)">Переместить</button>
+
+        </div>
+    </div>
     <script>
+        // Получаем элемент canvas и его контекст
         var canvas = document.getElementById("myCanvas");
         var ctx = canvas.getContext("2d");
-        var selectedShape = null;
-        var mouseX, mouseY, dragging = false, dragIndex;
-        var shapes = [];
-        var moveMode = false;
 
+        // Переменные для работы с фигурами и перемещением
+        var selectedShape = null; // Выбранная фигура для создания
+        var mouseX, mouseY, dragging = false, dragIndex; // Переменные для отслеживания перемещения
+        var shapes = []; // Массив для хранения фигур
+        var moveMode = false; // Режим перемещения фигур
+
+        // Функция для выбора типа фигуры
         function selectShape(shape) {
             selectedShape = shape;
         }
 
+        // Функция для удаления всех фигур и очистки canvas
         function deleteSelected() {
+            // Очистить весь холст
+            //Откуда брал работу с холстом
+            // https://developer.mozilla.org/ru/docs/Web/API/CanvasRenderingContext2D/clearRect
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             shapes = [];
         }
 
+        // Функция для удаления следующей выбранной фигуры
         function deleteNextSelected() {
             if (dragIndex !== undefined && dragIndex !== null) {
                 shapes.splice(dragIndex, 1);
@@ -51,14 +92,18 @@
             }
         }
 
+        // Функция для установки/снятия режима перемещения фигур
         function setMoveMode(value) {
             moveMode = value;
             // Очистить выбранную фигуру, когда переключается режим перемещения
             selectedShape = null;
         }
 
+        // Функция для отрисовки фигур на canvas
         function drawShapes() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Очистить canvas
+
+            // Отрисовываем каждую фигуру из массива
             shapes.forEach(function (shape) {
                 if (shape.type === "triangle") {
                     ctx.beginPath();
@@ -71,16 +116,18 @@
                     ctx.strokeRect(shape.x - 25, shape.y - 25, 50, 50);
                 } else if (shape.type === "text") {
                     ctx.font = "20px Arial";
-                    // Отрисовываем текст с учетом ширины текста
+                    // Отрисовываем текст с учетом ширины текста и позиции
                     ctx.fillText(shape.text, shape.x - ctx.measureText(shape.text).width / 2, shape.y);
                 }
             });
         }
 
+        // Обработчик события для нажатия кнопки мыши на canvas
         canvas.addEventListener('mousedown', function (event) {
             mouseX = event.offsetX;
             mouseY = event.offsetY;
             if (moveMode) {
+                // Проверяем, попадает ли клик в какую-либо фигуру при перемещении
                 shapes.forEach(function (shape, index) {
                     var dx = shape.x - mouseX;
                     var dy = shape.y - mouseY;
@@ -95,6 +142,7 @@
             }
         });
 
+        // Обработчик события для перемещения мыши на canvas
         canvas.addEventListener('mousemove', function (event) {
             if (!dragging) {
                 return;
@@ -108,11 +156,11 @@
 
             if (shape.type === 'text') {
                 var textWidth = ctx.measureText(shape.text).width;
-                
+                // Проверяем, находится ли новое положение текста в пределах canvas
                 if (newX + textWidth / 2 <= canvas.width && newX - textWidth / 2 >= 0) {
                     shape.x = newX;
                 }
-              
+                // В зависимости от высоты текста, учитываем её для корректного позиционирования
                 shape.y = newY;
             } else {
                 shape.x += dx;
@@ -123,13 +171,14 @@
             drawShapes();
         });
 
+        // Обработчик события для отпускания кнопки мыши на canvas
         canvas.addEventListener('mouseup', function (event) {
             dragging = false;
             if (moveMode) {
                 setMoveMode(false);
             }
         });
-
+        // Обработчик события для клика на canvas
         canvas.addEventListener('click', function (event) {
             if (dragging || moveMode) {
                 return;
@@ -139,21 +188,21 @@
                 var x = event.offsetX;
                 var y = event.offsetY;
                 if (selectedShape === 'triangle') {
-                    shapes.push({type: 'triangle', x: x, y: y});
+                    shapes.push({ type: 'triangle', x: x, y: y });
                     drawShapes();
                 } else if (selectedShape === 'rectangle') {
-                    shapes.push({type: 'rectangle', x: x, y: y});
+                    shapes.push({ type: 'rectangle', x: x, y: y });
                     drawShapes();
                 } else if (selectedShape === 'text') {
                     var text = prompt("Введите текст:");
                     if (text !== null && text !== "") {
-                        shapes.push({type: 'text', x: x, y: y, text: text});
+                        shapes.push({ type: 'text', x: x, y: y, text: text });
                         drawShapes();
                     }
                 }
             }
         });
     </script>
-</div>
 </body>
+
 </html>
