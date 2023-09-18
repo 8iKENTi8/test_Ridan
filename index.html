@@ -73,7 +73,6 @@
     </div>
 
     <script>
-        // JavaScript для создания и взаимодействия с фигурами
         const drawingArea = document.getElementById("drawingArea");
         const shapeSelector = document.getElementById("shapeSelector");
         const connectButton = document.getElementById("connectButton");
@@ -87,14 +86,10 @@
 
         function createShape(event) {
             const shapeType = shapeSelector.value;
+            const target = event.target;
 
-            // Проверяем, что клик произошел внутри области рисования
-            if (
-                event.pageX >= drawingArea.offsetLeft &&
-                event.pageX <= drawingArea.offsetLeft + drawingArea.offsetWidth &&
-                event.pageY >= drawingArea.offsetTop &&
-                event.pageY <= drawingArea.offsetTop + drawingArea.offsetHeight
-            ) {
+            // Проверяем, что клик произошел внутри области рисования и по пустому пространству
+            if (target.id === "drawingArea") {
                 const shape = document.createElement("div");
                 shape.className = `shape ${shapeType}`;
                 shape.style.left = event.pageX - drawingArea.offsetLeft + "px";
