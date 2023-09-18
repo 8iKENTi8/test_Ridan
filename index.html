@@ -1,128 +1,159 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Выбор фигуры</title>
-  <style>
-    canvas {
-      border: 1px solid black;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Выбор фигуры</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
 </head>
 <body>
-  <canvas id="myCanvas" width="500" height="500"></canvas><br>
+<div>
+    <canvas id="myCanvas" width="500" height="500"></canvas><br>
+    <button onclick="selectShape('triangle')">Треугольник</button>
+    <button onclick="selectShape('rectangle')">Прямоугольник</button>
+    <button onclick="selectShape('text')">Текст</button>
+    <button onclick="deleteSelected()">Удалить все</button>
+    <button onclick="deleteNextSelected()">Удалить следующий выбранный</button>
+    <button onclick="setMoveMode(true)">Переместить</button>
+    <script>
+        var canvas = document.getElementById("myCanvas");
+        var ctx = canvas.getContext("2d");
+        var selectedShape = null;
+        var mouseX, mouseY, dragging = false, dragIndex;
+        var shapes = [];
+        var moveMode = false;
 
-  <button onclick="selectShape('triangle')">Треугольник</button>
-  <button onclick="selectShape('rectangle')">Прямоугольник</button>
-  <button onclick="selectShape('text')">Текст</button>
-  <button onclick="deleteSelected()">Удалить выделенное</button>
-
-  <script>
-    var canvas = document.getElementById("myCanvas");
-    var ctx = canvas.getContext("2d");
-    var selectedShape = null;
-    var mouseX, mouseY, dragging = false, dragIndex;
-
-    var shapes = [];
-
-    function selectShape(shape) {
-      selectedShape = shape;
-    }
-
-    function deleteSelected() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      selectedShape = null;
-    }
-
-    function drawShapes() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      shapes.forEach(function(shape) {
-        if(shape.type === "triangle") {
-          ctx.beginPath();
-          ctx.moveTo(shape.x, shape.y);
-          ctx.lineTo(shape.x+50, shape.y+50);
-          ctx.lineTo(shape.x-50, shape.y+50);
-          ctx.closePath();
-          ctx.stroke();
-        } else if(shape.type === "rectangle") {
-          ctx.strokeRect(shape.x-25, shape.y-25, 50, 50);
-        } else if(shape.type === "text") {
-          ctx.font = "20px Arial";
-          ctx.fillText(shape.text, shape.x, shape.y);
+        function selectShape(shape) {
+            selectedShape = shape;
         }
-      });
-    }
 
-    canvas.addEventListener('click', function(event) {
-      if (dragging) {
-        dragging = false;
-        return;
-      }
-      
-      var x = event.offsetX;
-      var y = event.offsetY;
-      
-      if(selectedShape === 'triangle') {
-        shapes.push({type: 'triangle', x: x, y: y});
-        drawShapes();
-      } else if(selectedShape === 'rectangle') {
-        shapes.push({type: 'rectangle', x: x, y: y});
-        drawShapes();
-      } else if(selectedShape === 'text') {
-        var text = prompt("Введите текст:");
-        if(text !== null && text !== "") {
-          shapes.push({type: 'text', x: x, y: y, text: text});
-          drawShapes();
+        function deleteSelected() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            shapes = [];
         }
-      }
-    });
 
-    canvas.addEventListener('mousedown', function(event) {
-      mouseX = event.offsetX;
-      mouseY = event.offsetY;
-      
-      shapes.forEach(function(shape, index) {
-        var dx = shape.x - mouseX;
-        var dy = shape.y - mouseY;
-
-        if(shape.type === 'triangle' || shape.type === 'rectangle') {
-          if (dx * dx + dy * dy < 50 * 50) {
-            dragging = true;
-            dragIndex = index;
-          }
-        } else if (shape.type === 'text') {
-          var textWidth = ctx.measureText(shape.text).width;
-          if (dx >= 0 && dx <= textWidth && dy >= -20 && dy <= 0) {
-            dragging = true;
-            dragIndex = index;
-          }
+        function deleteNextSelected() {
+            if (dragIndex !== undefined && dragIndex !== null) {
+                shapes.splice(dragIndex, 1);
+                dragIndex = null;
+                drawShapes();
+            }
         }
-      });
-    });
 
-    canvas.addEventListener('mousemove', function(event) {
-      if (!dragging) {
-        return;
-      }
-      
-      var newX = event.offsetX;
-      var newY = event.offsetY;
-      
-      var dx = newX - mouseX;
-      var dy = newY - mouseY;
-      
-      shapes[dragIndex].x += dx;
-      shapes[dragIndex].y += dy;
-      drawShapes();
+        function setMoveMode(value) {
+            moveMode = value;
+            // Очистить выбранную фигуру, когда переключается режим перемещения
+            selectedShape = null;
+        }
 
-      mouseX = newX;
-      mouseY = newY;
-    });
+        function drawShapes() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            shapes.forEach(function (shape) {
+                if (shape.type === "triangle") {
+                    ctx.beginPath();
+                    ctx.moveTo(shape.x, shape.y);
+                    ctx.lineTo(shape.x + 50, shape.y + 50);
+                    ctx.lineTo(shape.x - 50, shape.y + 50);
+                    ctx.closePath();
+                    ctx.stroke();
+                } else if (shape.type === "rectangle") {
+                    ctx.strokeRect(shape.x - 25, shape.y - 25, 50, 50);
+                } else if (shape.type === "text") {
+                    ctx.font = "20px Arial";
+                    // Отрисовываем текст с учетом ширины текста
+                    ctx.fillText(shape.text, shape.x - ctx.measureText(shape.text).width / 2, shape.y);
+                }
+            });
+        }
 
-    canvas.addEventListener('mouseup', function(event) {
-      dragging = false;
-    });
-  </script>
+        canvas.addEventListener('mousedown', function (event) {
+            mouseX = event.offsetX;
+            mouseY = event.offsetY;
+            if (moveMode) {
+                shapes.forEach(function (shape, index) {
+                    var dx = shape.x - mouseX;
+                    var dy = shape.y - mouseY;
+
+                    if (shape.type === 'triangle' || shape.type === 'rectangle' || shape.type === 'text') {
+                        if (dx * dx + dy * dy < 50 * 50) {
+                            dragging = true;
+                            dragIndex = index;
+                        }
+                    }
+                });
+            }
+        });
+
+        canvas.addEventListener('mousemove', function (event) {
+            if (!dragging) {
+                return;
+            }
+
+            var newX = event.offsetX;
+            var newY = event.offsetY;
+            var dx = newX - mouseX;
+            var dy = newY - mouseY;
+            var shape = shapes[dragIndex];
+
+            if (shape.type === 'text') {
+                var textWidth = ctx.measureText(shape.text).width;
+                
+                if (newX + textWidth / 2 <= canvas.width && newX - textWidth / 2 >= 0) {
+                    shape.x = newX;
+                }
+              
+                shape.y = newY;
+            } else {
+                shape.x += dx;
+                shape.y += dy;
+            }
+            mouseX = newX;
+            mouseY = newY;
+            drawShapes();
+        });
+
+        canvas.addEventListener('mouseup', function (event) {
+            dragging = false;
+            if (moveMode) {
+                setMoveMode(false);
+            }
+        });
+
+        canvas.addEventListener('click', function (event) {
+            if (dragging || moveMode) {
+                return;
+            }
+
+            if (selectedShape) {
+                var x = event.offsetX;
+                var y = event.offsetY;
+                if (selectedShape === 'triangle') {
+                    shapes.push({type: 'triangle', x: x, y: y});
+                    drawShapes();
+                } else if (selectedShape === 'rectangle') {
+                    shapes.push({type: 'rectangle', x: x, y: y});
+                    drawShapes();
+                } else if (selectedShape === 'text') {
+                    var text = prompt("Введите текст:");
+                    if (text !== null && text !== "") {
+                        shapes.push({type: 'text', x: x, y: y, text: text});
+                        drawShapes();
+                    }
+                }
+            }
+        });
+    </script>
+</div>
 </body>
 </html>
