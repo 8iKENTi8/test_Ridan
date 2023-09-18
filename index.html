@@ -1,163 +1,128 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <style>
-        /* Стили для контейнера */
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .container {
-            position: relative;
-            width: 600px;
-            height: 400px;
-            border: 1px solid #ccc;
-        }
-
-        /* Стили для фигур */
-        .shape {
-            position: absolute;
-            cursor: pointer;
-        }
-
-        .triangle {
-            width: 0;
-            height: 0;
-            border-left: 30px solid transparent;
-            border-right: 30px solid transparent;
-            border-bottom: 52px solid #007bff;
-        }
-
-        .rectangle {
-            width: 100px;
-            height: 50px;
-            background-color: #ff5722;
-        }
-
-        /* Стили для линий */
-        .line {
-            position: absolute;
-            border: 1px solid #000;
-            pointer-events: none;
-        }
-
-        /* Стили для надписей */
-        .label {
-            position: absolute;
-            pointer-events: none;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Выбор фигуры</title>
+  <style>
+    canvas {
+      border: 1px solid black;
+    }
+  </style>
 </head>
 <body>
-    <div class="container" id="drawingArea">
-        <!-- Здесь будут отображаться фигуры, линии и надписи -->
-    </div>
+  <canvas id="myCanvas" width="500" height="500"></canvas><br>
 
-    <svg id="svgContainer" width="600" height="400">
-        <!-- Здесь будут отображаться линии -->
-    </svg>
+  <button onclick="selectShape('triangle')">Треугольник</button>
+  <button onclick="selectShape('rectangle')">Прямоугольник</button>
+  <button onclick="selectShape('text')">Текст</button>
+  <button onclick="deleteSelected()">Удалить выделенное</button>
 
-    <div>
-        <label for="shapeSelector">Выберите фигуру:</label>
-        <select id="shapeSelector">
-            <option value="triangle">Треугольник</option>
-            <option value="rectangle">Прямоугольник</option>
-        </select>
-        <button id="connectButton">Соединить</button>
-        <input type="text" id="labelText" placeholder="Введите текст">
-        <button id="addLabelButton">Добавить надпись</button>
-    </div>
+  <script>
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+    var selectedShape = null;
+    var mouseX, mouseY, dragging = false, dragIndex;
 
-    <script>
-        const drawingArea = document.getElementById("drawingArea");
-        const shapeSelector = document.getElementById("shapeSelector");
-        const connectButton = document.getElementById("connectButton");
-        const labelText = document.getElementById("labelText");
-        const addLabelButton = document.getElementById("addLabelButton");
-        const svgContainer = document.getElementById("svgContainer");
+    var shapes = [];
 
-        let selectedShape = null;
-        let startPoint = null;
-        let connectingLine = null;
+    function selectShape(shape) {
+      selectedShape = shape;
+    }
 
-        function createShape(event) {
-            const shapeType = shapeSelector.value;
-            const target = event.target;
+    function deleteSelected() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      selectedShape = null;
+    }
 
-            // Проверяем, что клик произошел внутри области рисования и по пустому пространству
-            if (target.id === "drawingArea") {
-                const shape = document.createElement("div");
-                shape.className = `shape ${shapeType}`;
-                shape.style.left = event.pageX - drawingArea.offsetLeft + "px";
-                shape.style.top = event.pageY - drawingArea.offsetTop + "px";
+    function drawShapes() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                shape.addEventListener("mousedown", startDragging);
-                drawingArea.appendChild(shape);
-            }
+      shapes.forEach(function(shape) {
+        if(shape.type === "triangle") {
+          ctx.beginPath();
+          ctx.moveTo(shape.x, shape.y);
+          ctx.lineTo(shape.x+50, shape.y+50);
+          ctx.lineTo(shape.x-50, shape.y+50);
+          ctx.closePath();
+          ctx.stroke();
+        } else if(shape.type === "rectangle") {
+          ctx.strokeRect(shape.x-25, shape.y-25, 50, 50);
+        } else if(shape.type === "text") {
+          ctx.font = "20px Arial";
+          ctx.fillText(shape.text, shape.x, shape.y);
         }
+      });
+    }
 
-        function startDragging(event) {
-            selectedShape = event.target;
-            startPoint = { x: event.clientX, y: event.clientY };
-
-            document.addEventListener("mousemove", dragShape);
-            document.addEventListener("mouseup", stopDragging);
+    canvas.addEventListener('click', function(event) {
+      if (dragging) {
+        dragging = false;
+        return;
+      }
+      
+      var x = event.offsetX;
+      var y = event.offsetY;
+      
+      if(selectedShape === 'triangle') {
+        shapes.push({type: 'triangle', x: x, y: y});
+        drawShapes();
+      } else if(selectedShape === 'rectangle') {
+        shapes.push({type: 'rectangle', x: x, y: y});
+        drawShapes();
+      } else if(selectedShape === 'text') {
+        var text = prompt("Введите текст:");
+        if(text !== null && text !== "") {
+          shapes.push({type: 'text', x: x, y: y, text: text});
+          drawShapes();
         }
+      }
+    });
 
-        function dragShape(event) {
-            const offsetX = event.clientX - startPoint.x;
-            const offsetY = event.clientY - startPoint.y;
+    canvas.addEventListener('mousedown', function(event) {
+      mouseX = event.offsetX;
+      mouseY = event.offsetY;
+      
+      shapes.forEach(function(shape, index) {
+        var dx = shape.x - mouseX;
+        var dy = shape.y - mouseY;
 
-            selectedShape.style.left = selectedShape.offsetLeft + offsetX + "px";
-            selectedShape.style.top = selectedShape.offsetTop + offsetY + "px";
-
-            startPoint = { x: event.clientX, y: event.clientY };
+        if(shape.type === 'triangle' || shape.type === 'rectangle') {
+          if (dx * dx + dy * dy < 50 * 50) {
+            dragging = true;
+            dragIndex = index;
+          }
+        } else if (shape.type === 'text') {
+          var textWidth = ctx.measureText(shape.text).width;
+          if (dx >= 0 && dx <= textWidth && dy >= -20 && dy <= 0) {
+            dragging = true;
+            dragIndex = index;
+          }
         }
+      });
+    });
 
-        function stopDragging() {
-            selectedShape = null;
-            startPoint = null;
+    canvas.addEventListener('mousemove', function(event) {
+      if (!dragging) {
+        return;
+      }
+      
+      var newX = event.offsetX;
+      var newY = event.offsetY;
+      
+      var dx = newX - mouseX;
+      var dy = newY - mouseY;
+      
+      shapes[dragIndex].x += dx;
+      shapes[dragIndex].y += dy;
+      drawShapes();
 
-            document.removeEventListener("mousemove", dragShape);
-            document.removeEventListener("mouseup", stopDragging);
-        }
+      mouseX = newX;
+      mouseY = newY;
+    });
 
-        function connectShapes() {
-            if (selectedShape) {
-                if (!connectingLine) {
-                    connectingLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    connectingLine.setAttribute("stroke", "black");
-                    connectingLine.setAttribute("stroke-width", "2");
-                    connectingLine.setAttribute("x1", selectedShape.offsetLeft + selectedShape.offsetWidth / 2);
-                    connectingLine.setAttribute("y1", selectedShape.offsetTop + selectedShape.offsetHeight / 2);
-                    connectingLine.setAttribute("x2", selectedShape.offsetLeft + selectedShape.offsetWidth / 2);
-                    connectingLine.setAttribute("y2", selectedShape.offsetTop + selectedShape.offsetHeight / 2);
-                    svgContainer.appendChild(connectingLine);
-                } else {
-                    connectingLine = null;
-                }
-            }
-        }
-
-        function addLabel() {
-            if (selectedShape && labelText.value.trim() !== "") {
-                const label = document.createElement("div");
-                label.className = "label";
-                label.innerText = labelText.value;
-                label.style.left = selectedShape.offsetLeft + "px";
-                label.style.top = selectedShape.offsetTop - 20 + "px";
-
-                drawingArea.appendChild(label);
-            }
-        }
-
-        connectButton.addEventListener("click", connectShapes);
-        addLabelButton.addEventListener("click", addLabel);
-        drawingArea.addEventListener("click", createShape);
-    </script>
+    canvas.addEventListener('mouseup', function(event) {
+      dragging = false;
+    });
+  </script>
 </body>
 </html>
