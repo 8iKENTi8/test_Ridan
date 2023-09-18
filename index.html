@@ -55,7 +55,7 @@
             <button onclick="deleteSelected()">Удалить все</button>
             <button onclick="deleteNextSelected()">Удалить следующий выбранный</button>
             <button onclick="setMoveMode(true)">Переместить</button>
-
+            <button onclick="saveCanvasAsImage()">Сохранить в картинку</button>
         </div>
     </div>
     <script>
@@ -101,9 +101,11 @@
 
         // Функция для отрисовки фигур на canvas
         function drawShapes() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Очистить canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white'; // Устанавливаем белый цвет фона
+            ctx.fillRect(0, 0, canvas.width, canvas.height); // Заполняем всю область белым цветом
+            ctx.fillStyle = 'black'; // Восстанавливаем черный цвет для фигур
 
-            // Отрисовываем каждую фигуру из массива
             shapes.forEach(function (shape) {
                 if (shape.type === "triangle") {
                     ctx.beginPath();
@@ -116,10 +118,18 @@
                     ctx.strokeRect(shape.x - 25, shape.y - 25, 50, 50);
                 } else if (shape.type === "text") {
                     ctx.font = "20px Arial";
-                    // Отрисовываем текст с учетом ширины текста и позиции
+                    // Отрисовываем текст с учетом ширины текста
                     ctx.fillText(shape.text, shape.x - ctx.measureText(shape.text).width / 2, shape.y);
                 }
             });
+        }
+
+        function saveCanvasAsImage() {
+            // Создаем временный элемент "a" для сохранения изображения
+            var downloadLink = document.createElement('a');
+            downloadLink.href = canvas.toDataURL('image/png'); // Получаем данные из canvas в формате PNG
+            downloadLink.download = 'myCanvasImage.png'; // Задаем имя файла
+            downloadLink.click(); // Вызываем клик по элементу, чтобы начать скачивание
         }
 
         // Обработчик события для нажатия кнопки мыши на canvas
